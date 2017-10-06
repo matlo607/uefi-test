@@ -1,0 +1,7 @@
+*.o
+*.efi
+*.so
+*.a
+*.pyc
+build-dir/
+conanfile.txt
