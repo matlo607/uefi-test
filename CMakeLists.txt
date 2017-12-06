@@ -162,7 +162,6 @@ add_custom_target(${TARGET_DISK_UEFI_QEMU_READY}
 ## QEMU ##
 ##########
 set(QEMU_CMD_COMMON qemu-system-x86_64
-    -enable-kvm
     -drive if=pflash,format=raw,unit=0,file="${OVMF_DISK_IMG}",readonly=on
     -drive if=ide,format=raw,file=uefi.img)
 
