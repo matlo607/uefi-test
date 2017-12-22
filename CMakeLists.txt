@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.2)
 project(uefi-application)
 
-#if(NOT CMAKE_BUILD_TYPE)
-#    #set(CMAKE_BUILD_TYPE Release)
-#    set(CMAKE_BUILD_TYPE Debug)
-#endif(NOT CMAKE_BUILD_TYPE)
-#
-#if(CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "Release")
-#    message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
-#else()
-#    message(FATAL_ERROR "CMake build type \"${CMAKE_BUILD_TYPE}\" is not supported")
-#endif()
+if(NOT CMAKE_BUILD_TYPE)
+    #set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_BUILD_TYPE Debug)
+endif(NOT CMAKE_BUILD_TYPE)
+
+if(CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "Release")
+    message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
+else()
+    message(FATAL_ERROR "CMake build type \"${CMAKE_BUILD_TYPE}\" is not supported")
+endif()
 
 message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 
