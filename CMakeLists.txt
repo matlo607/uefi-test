@@ -152,7 +152,9 @@ endif()
 set(DISK_NAME "uefi.img")
 set(TARGET_DISK_UEFI_QEMU_READY "${DISK_NAME}")
 add_custom_target(${TARGET_DISK_UEFI_QEMU_READY}
-    COMMAND "${CMAKE_SOURCE_DIR}/scripts/create_disk.bash" -o "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${DISK_NAME}"
+    COMMAND "${CMAKE_SOURCE_DIR}/scripts/create_disk.py"
+    "--tool=mtools"
+    -o "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${DISK_NAME}"
     "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}.efi"
     "${CMAKE_SOURCE_DIR}/efi_scripts/startup.nsh"
     DEPENDS "${TARGET_NAME}"
