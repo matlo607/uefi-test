@@ -52,3 +52,4 @@ CC=clang-5.0 CXX=clang++-5.0 cmake ..
 
 * [conan.io/Doc](http://docs.conan.io/en/latest/)
 * [OS-Dev.org/UEFI](http://wiki.osdev.org/UEFI)
+* [mjg59 - Getting started with UEFI development](https://mjg59.dreamwidth.org/18773.html)
