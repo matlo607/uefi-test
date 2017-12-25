@@ -17,6 +17,9 @@ install:
     - sudo apt-get install -qq qemu-system-x86 ovmf
     - sudo apt-get install -qq cmake
     - sudo apt-get install -qq mount dosfstools
+    - sudo apt-get install -qq mtools parted gdisk
+    - sudo apt-get install -qq python3-pip
+    - sudo pip3 install pexpect
     # EDK2 dependencies
     #- sudo apt-get install -qq uuid-dev
 
