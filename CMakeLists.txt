@@ -40,7 +40,14 @@ endif()
 if (NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 endif()
+if (NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+endif()
 message(STATUS "CMAKE_RUNTIME_OUTPUT_DIRECTORY: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+message(STATUS "CMAKE_LIBRARY_OUTPUT_DIRECTORY: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+message(STATUS "CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG}")
+message(STATUS "CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}")
+message(STATUS "CMAKE_ARCHIVE_OUTPUT_DIRECTORY: ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
 
 ###############################
 # Check compiler's capabilities
@@ -122,17 +129,27 @@ message(STATUS "CMAKE_C_COMPILE_FLAGS=${CMAKE_C_COMPILE_FLAGS}")
 target_compile_definitions("${TARGET_NAME}" PUBLIC _DEBUG)
 target_compile_options("${TARGET_NAME}" PUBLIC ${CMAKE_C_COMPILE_FLAGS})
 target_link_libraries("${TARGET_NAME}" PUBLIC GnuEfi::GnuEfi PRIVATE ${GNUEFI_LIBRARIES})
-set_target_properties("${TARGET_NAME}" PROPERTIES
-             LIBRARY_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 if(MINGW)
     add_custom_command(TARGET "${TARGET_NAME}" POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib${TARGET_NAME}.dll"
+        "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/lib${TARGET_NAME}.dll"
         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}.efi")
 else()
     add_custom_command(TARGET "${TARGET_NAME}" POST_BUILD
-        COMMAND ${CMAKE_OBJCOPY}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
+    function(efi_objcopy)
+        cmake_parse_arguments(parsedargs "" "INFILE;OUTFILE" "SECTIONS" ${ARGN})
+        add_custom_command(TARGET "${TARGET_NAME}" POST_BUILD
+            COMMAND ${CMAKE_OBJCOPY}
+            ${parsedargs_SECTIONS}
+            --target=efi-app-x86_64
+            "${parsedargs_INFILE}"
+            "${parsedargs_OUTFILE}")
+    endfunction()
+
+    set(ELF_SECTIONS
         -j .text
         -j .sdata
         -j .data
@@ -140,10 +157,26 @@ else()
         -j .dynsym
         -j .rel
         -j .rela
-        -j .reloc
-        --target=efi-app-x86_64
-        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib${TARGET_NAME}.so"
-        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}.efi")
+        -j .reloc)
+
+    efi_objcopy(INFILE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/lib${TARGET_NAME}.so"
+        OUTFILE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}.efi"
+        SECTIONS ${ELF_SECTIONS})
+
+    if(CMAKE_BUILD_TYPE MATCHES "Debug")
+        set(ELF_DEBUG_SECTIONS
+            -j .debug_info
+            -j .debug_abbrev
+            -j .debug_loc
+            -j .debug_aranges
+            -j .debug_line
+            -j .debug_macinfo
+            -j .debug_str)
+
+        efi_objcopy(INFILE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/lib${TARGET_NAME}.so"
+                    OUTFILE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}-debug.efi"
+                    SECTIONS ${ELF_SECTIONS} ${ELF_DEBUG_SECTIONS})
+    endif()
 endif()
 
 #######################
