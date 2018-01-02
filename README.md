@@ -43,13 +43,46 @@ make run-qemu-nographics-tty
 ```
 
 ### MINGW-W64
+```
 cmake -DCMAKE_TOOLCHAIN_FILE="../cmake/toolchains/mingw64.cmake" ..
+```
 
 ### CLANG
+```
 CC=clang-5.0 CXX=clang++-5.0 cmake ..
+```
+
+## Debugging
+
+Debugging EFI applications has only been tested with GCC on Linux.
+It doesn't work with MINGW.
+It wasn't tested with Clang.
+
+### First terminal
+Start Qemu with the EFI binary without debug symbols.
+It will wait for a tcp connection on port 5555 before running OVMF.
+```
+make run-qemu-gdbstab
+```
+
+### Second terminal
+Start socat on port 5555.
+```
+make debug-tty
+...
+Image base: 0x<IMAGE_BASE>
+```
+
+### Third terminal
+Run gdb and load the image with debug symbols to a relocated address
+```
+make gdb
+> efidebug -f binary-debug.efi -b 0x<IMAGE_BASE>
+```
 
 ## Resources
 
 * [conan.io/Doc](http://docs.conan.io/en/latest/)
 * [OS-Dev.org/UEFI](http://wiki.osdev.org/UEFI)
+* [OS-Dev.org/Debugging UEFI applications with GDB](http://wiki.osdev.org/Debugging_UEFI_applications_with_GDB)
 * [mjg59 - Getting started with UEFI development](https://mjg59.dreamwidth.org/18773.html)

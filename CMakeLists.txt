@@ -133,7 +133,7 @@ target_link_libraries("${TARGET_NAME}" PUBLIC GnuEfi::GnuEfi PRIVATE ${GNUEFI_LI
 if(MINGW)
     add_custom_command(TARGET "${TARGET_NAME}" POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/lib${TARGET_NAME}.dll"
+        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib${TARGET_NAME}.dll"
         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}.efi")
 else()
     add_custom_command(TARGET "${TARGET_NAME}" POST_BUILD
@@ -197,6 +197,7 @@ add_custom_target(${TARGET_DISK_UEFI_QEMU_READY}
 ## QEMU ##
 ##########
 set(QEMU_CMD_COMMON qemu-system-x86_64
+    -cpu kvm64
     -enable-kvm
     -drive if=pflash,format=raw,unit=0,file="${OVMF_DISK_IMG}",readonly=on
     -drive if=ide,format=raw,file=uefi.img)
@@ -215,6 +216,33 @@ add_custom_target("run-qemu-nographic-file" COMMAND ${QEMU_CMD_COMMON}
     -nographic
     -serial file:"/tmp/uefi.log"
     DEPENDS "${TARGET_DISK_UEFI_QEMU_READY}"
+    WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
+#############
+# DEBUGGING #
+#############
+
+add_custom_target("run-qemu-gdbstab" COMMAND ${QEMU_CMD_COMMON}
+    -nographic
+    -monitor stdio
+    -serial tcp::5555,server
+    -s
+    DEPENDS "${TARGET_DISK_UEFI_QEMU_READY}"
+    WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
+add_custom_target("debug-tty" COMMAND socat
+    -,raw,echo=0
+    tcp4:localhost:5555
+    WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
+if (NOT DEFINED SYSTEM_DEBUGGER)
+    set(SYSTEM_DEBUGGER "gdb")
+endif()
+message(STATUS "SYSTEM_DEBUGGER: ${SYSTEM_DEBUGGER}")
+add_custom_target("gdb" COMMAND ${SYSTEM_DEBUGGER}
+    -ex "file ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}.efi"
+    -ex "source ${CMAKE_SOURCE_DIR}/scripts/efidebughelper.py"
+    DEPENDS "${TARGET_NAME}"
     WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 #add_subdirectory(src)
